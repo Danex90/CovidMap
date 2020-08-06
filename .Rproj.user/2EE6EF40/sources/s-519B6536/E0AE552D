@@ -1,0 +1,24 @@
+{
+    "id": "E0AE552D",
+    "path": "C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/app.R",
+    "project_path": "app.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1596738524741.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "cursorPosition": "14,39",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1596667940,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1596667940,
+    "read_only": false,
+    "read_only_alternatives": []
+}

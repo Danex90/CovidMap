@@ -1,0 +1,56 @@
+library(rvest)
+library(tidyverse)
+library(lubridate)
+ncdc_url <- "https://covid19.ncdc.gov.ng/"
+ngr_covid_page<- read_html(ncdc_url)
+
+tables_on_page <- ngr_covid_page%>%
+  html_nodes("table")%>%
+  html_table(fill=T)
+tables_on_page
+
+ngr_covid_cases <- tables_on_page[[4]]
+ngr_covid_cases <- ngr_covid_cases %>% 
+  as_tibble(ngr_covid_cases)
+
+
+ngr_covid_cases <- ngr_covid_cases %>% 
+  mutate(Date=NA) %>% 
+  dplyr::select(Date,everything()) %>% 
+  filter(`States Affected`!="Total") %>% 
+  mutate(`States Affected`=ifelse(`States Affected`=="Abuja FCT","Federal Capital Territory",`States Affected`))
+
+datacsv <- read_csv("C:\\Users\\Danladi Adamu\\Documents\\R\\Shiny\\CovidMap\\Complete NCDC Data.csv")
+
+#datacsv <- datacsv %>% 
+ # mutate(Date=ymd(Date))
+names(ngr_covid_cases) <- names(datacsv)
+Ada <- tribble(
+  ~Date, ~State, ~`Confirmed Cases`,~`Cases on Admission`,~`Discharged Cases`,~Deaths,
+  NA, "Adamawa",1,1,0,0
+  )
+ngr_covid_cases <- rbind(Ada,ngr_covid_cases)
+
+#Import another tibble that will be used to fill in non represented states
+jointbl <- read_csv("C:\\Users\\Danladi Adamu\\Downloads\\COVID\\Joining table.csv")
+colnames(jointbl) <- names(datacsv)
+tabch <- function(tabs){
+  tabs <- jointbl %>% 
+    filter(!State %in% tabs$State) %>% 
+    rbind(tabs) 
+}
+
+
+for(x in ls()){
+  if(any(class(get(x))=="tbl")& x!="jointbl"){
+    assign(x,tabch(get(x)))
+  }
+}
+
+ngr_covid_cases <-  ngr_covid_cases %>% 
+  mutate(Date=max(datacsv$Date)+1)
+
+datacsv <- rbind(datacsv,ngr_covid_cases)
+
+write_csv(datacsv,"C:/Users/Danladi Adamu/Downloads/COVID/Complete NCDC Data.csv")
+?read_csv

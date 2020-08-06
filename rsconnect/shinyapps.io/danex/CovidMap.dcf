@@ -1,0 +1,13 @@
+name: CovidMap
+title: CovidMap
+username:
+account: danex
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2185362
+bundleId: 3484533
+url: https://danex.shinyapps.io/CovidMap/
+when: 1596755785.85918
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|Tests done.csv

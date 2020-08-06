@@ -1,0 +1,250 @@
+#Loading required packages
+library(shiny)
+library(shinydashboard)
+library(shinyWidgets)
+library(plotly)
+library(sp)
+library(tidyverse)
+library(RColorBrewer)
+library(leaflet)
+library(lubridate)
+
+#Preparing the Data for both maps and values-----------
+datacsv <- read_csv("Complete NCDC Data.csv")
+mypolygons <- readRDS("gadm36_NGA_1_sp.rds")
+
+#Create a column for days since first case
+datacsv <- datacsv %>% 
+  arrange(Date) %>% 
+  group_by(State) %>% 
+  mutate(Day=row_number()) %>% 
+  ungroup()
+
+#Convert names to syntatic versions
+datacsv <- datacsv %>% 
+  transmute(Date=Date,State=State,Day=Day,
+            ConfirmedCases=`Confirmed Cases`,AdmittedCases=`Cases on Admission`,DischargedCases=`Discharged Cases`,Deaths=Deaths
+  )
+
+#Calculate Number of New Cases for each column
+datacsv <- datacsv %>% 
+ group_by(State) %>% 
+  arrange(State,Date) %>% 
+  mutate(newc=lag(ConfirmedCases),NewConfirmedCases=ConfirmedCases-newc,
+         newa=lag(AdmittedCases),NewAdmittedCases=AdmittedCases-newa,
+         newdi=lag(DischargedCases),NewDischargedCases=DischargedCases-newdi,
+         newde=lag(Deaths),NewDeaths=Deaths-newde) %>% 
+ dplyr::select(Date:Deaths,NewConfirmedCases,NewAdmittedCases,NewDischargedCases,NewDeaths) %>% 
+  ungroup()
+  
+#Filter out the latest values for each category
+latest <- datacsv %>%
+  filter(Date==max(Date)) %>% 
+  summarise(ConfirmedCases=sum(ConfirmedCases),
+           AdmittedCases = sum(AdmittedCases),
+          DischargedCases=sum(DischargedCases),
+          Deaths=sum(Deaths),
+          NewConfirmedCases=sum(NewConfirmedCases),
+          NewDischargedCases=sum(NewDischargedCases),
+          NewAdmittedCases=sum(NewAdmittedCases),
+          NewDeaths=sum(NewDeaths))
+
+  
+
+#Daily sums of cases from all states
+dailydatacsv <- datacsv %>% 
+  group_by(Day) %>% 
+  summarise(Date=max(Date),
+            `Confirmed Cases`=sum(ConfirmedCases),
+            `Admitted Cases`=sum(AdmittedCases),
+            `Discharged Cases`=sum(DischargedCases),
+            Deaths=sum(Deaths),
+            `New Cases`=sum(NewConfirmedCases),
+            `New Discharged Cases`=sum(NewDischargedCases),
+            `New Admitted Cases`=sum(NewAdmittedCases),
+            `New Deaths`=sum(NewDeaths)) %>% 
+            ungroup()
+
+#Plots------------------------------------------
+#Plot 1 Daily totals
+plot1 <- dailydatacsv %>% 
+  pivot_longer(cols = c("Confirmed Cases"), names_to = "variable" , values_to = "Value") %>% 
+  ggplot(aes(x=Date,y=Value))+
+  geom_line(aes(color=variable))+
+  geom_point(aes(color=variable),size=0.6)+
+  labs(title = "Total Cases and Deaths",subtitle = "Daily totals for cases and deaths")+
+  theme(legend.title = element_blank(),axis.title.y = element_blank(),axis.text.x = element_blank(),legend.position = "left")
+  
+plot2 <-   dailydatacsv %>% 
+    pivot_longer(cols = c("Deaths"), names_to = "variable" , values_to = "Value") %>% 
+    ggplot(aes(x=Date,y=Value))+
+    geom_line(aes(color=variable))+
+    geom_point(aes(color=variable),size=0.6)+
+    labs(title = "Total Cases and Deaths",subtitle = "Daily totals for cases and deaths")+
+    theme(legend.title = element_blank(),axis.title.y = element_blank(),axis.text.x = element_blank(),legend.position = "left")
+
+  
+
+#Plot 2 New Cases and New Deaths
+plot3 <-  dailydatacsv %>% 
+  pivot_longer(cols = c("New Cases"), names_to = "variable" , values_to = "Value") %>% 
+  ggplot(aes(x=Date,y=Value))+
+  geom_line(aes(color=variable))+
+  geom_point(aes(color=variable),size=0.6)+
+  labs(title = "Daily New Cases and Deaths",subtitle = "Daily totals for new cases and new deaths")+
+  theme(legend.title = element_blank(),axis.title.y = element_blank(),axis.text.x = element_blank() )
+
+
+plot4 <-   dailydatacsv %>% 
+    pivot_longer(cols = c("New Deaths"), names_to = "variable" , values_to = "Value") %>% 
+    ggplot(aes(x=Date,y=Value))+
+    geom_line(aes(color=variable))+
+    geom_point(aes(color=variable),size=0.6)+
+    labs(title = "Daily New Cases and Deaths",subtitle = "Daily totals for new cases and new deaths")+
+    theme(legend.title = element_blank(),axis.title.y = element_blank(),axis.text.x = element_blank() )
+
+#Plot 3 Number of Cases and deaths by state
+plot5 <- plot_ly(data = datacsv %>% 
+                   filter(Day==max(Day),ConfirmedCases!=0),
+                 type="bar",
+                 y = ~reorder(State,ConfirmedCases),
+                 x = ~ConfirmedCases,
+                 #orientation="h",
+                 hoverinfo = 'text',
+                 text = ~paste0(
+                   "State: ",State, 
+                   "<br>Cases: ", ConfirmedCases))
+
+
+#Plot 4 Number of Deaths by state
+plot6 <- plot_ly(data = datacsv %>% 
+                   filter(Day==max(Day),Deaths!=0),
+                 type="bar",
+                 y = ~reorder(State,Deaths),
+                 x = ~Deaths,
+                 #orientation="h",
+                 hoverinfo = 'text',
+                 text = ~paste0(
+                   "State: ",State, 
+                   "<br>Cases: ", Deaths))
+mapcsv <- datacsv %>%
+  filter(Date==max(Date)) %>% 
+  mutate(State=ifelse(State=="Nasarawa","Nassarawa",State))
+
+fulldata <- sp::merge(mapcsv,mypolygons,by.x="State",by.y="NAME_1")
+
+postdate <- max(datacsv$Date)
+realdate <- format(postdate, "%d-%B-%y")  
+
+#UI Starts here------------------
+ui <- dashboardPage(
+#Naming and configuring the Header of the dashboard-------------
+  dashboardHeader(title = "COVID-19 Dashboard"),
+#Naming and configuring the sidebar of the dashboard-----------------
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Maps",tabName = "Maps",icon = icon("map")),
+      menuItem("Charts",tabName = "Charts", icon = icon("th")),
+      a("Data Source",href="http://covid19.ncdc.gov.ng",target="_blank")
+      #menuItem(selectInput(inputId = "cases",label = "Data to display",choices = selectChoices)),
+      #menuItem(actionButton(inputId = "cli",label = "Update"))
+    )
+  ),
+#Naming and configuring the body of the dashboard----
+  dashboardBody(
+    tabItems(
+      tabItem(tabName = "Maps",
+#Top row of 4 boxes for summary numbers------------
+              fluidRow(
+          valueBoxOutput("newcases",width = 2),
+          valueBoxOutput("activecases",width = 2),
+          valueBoxOutput("confirmedcases",width = 2),
+          valueBoxOutput("newdeaths",width = 2),
+          valueBoxOutput("deaths",width = 2),
+          valueBoxOutput("dischargedcases",width = 2)
+      ),
+#Next row of one box for a map---------------
+      fluidRow(
+        leafletOutput("mymap",height = 600)
+      )
+      ),
+#Charts tab---------------
+      tabItem(tabName = "Charts", 
+              fluidRow(
+                box(ggplotly(plot1) %>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
+                      ,width = 6,solidHeader = T),
+                box(ggplotly(plot2) %>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
+                    ,width = 6)
+              ),
+              fluidRow(
+                box(ggplotly(plot3) %>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
+                    ,width = 6,solidHeader = T),
+                box(ggplotly(plot4) %>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
+                    ,width = 6)
+              ),
+             fluidRow(
+                box(plot5 %>% config(displayModeBar=F) %>% layout(title=list(text="Cases in each State")) %>%layout(xaxis=list(fixedrange=T,visible=T,title="")) %>% layout(yaxis=list(fixedrange=T,title="",tickmode="linear",nticks=10))
+                    ,width = 6),
+               box(plot6 %>% config(displayModeBar=F) %>% layout(title=list(text="Deaths in each State")) %>%layout(xaxis=list(fixedrange=T,title="")) %>% layout(yaxis=list(fixedrange=T,title=""))
+                   ,width = 6)
+             )
+          )
+    )
+  )
+)
+
+
+
+#Server starts here------------------
+server <- function(input, output){
+  output$newcases <- renderValueBox({
+    valueBox(latest$NewConfirmedCases,paste0("New Cases (",realdate,")"),icon =icon("arrow-up"),color = "blue")
+  })
+  output$confirmedcases <- renderValueBox({
+    valueBox(latest$ConfirmedCases,paste0("Total Cases (",realdate,")"),icon =icon("hospital"),color = "blue")
+  })
+  output$dischargedcases <- renderValueBox({
+    valueBox(latest$DischargedCases,paste0("Recovered (",realdate,")"),icon =icon("home"),color = "green")
+ })
+  output$newdeaths <- renderValueBox({
+    valueBox(latest$NewDeaths,paste0("New Deaths (",realdate,")"),icon =icon("arrow-up"),color = "red")
+  })
+  output$activecases <- renderValueBox({
+    valueBox(latest$AdmittedCases,paste0("Active Cases (",realdate,")"),icon =icon("hospital"),color = "blue")
+  })
+  output$deaths <- renderValueBox({
+    valueBox(latest$Deaths,paste0("Total Deaths (",realdate,")"),icon =icon("hospital"),color = "red")
+ })
+  #Data for the map-----------------------------
+  output$mymap <- renderLeaflet({
+    newx <- fulldata 
+    mypolygons@data <- 
+      data.frame(mypolygons@data, 
+                 newx[match(mypolygons@data[,"NAME_1"], 
+                            newx[,"State"]),])
+    popup <- 
+      paste0(
+        "<strong>State: </strong>", mypolygons@data$State, 
+        "<br><strong>Cases: </strong>", mypolygons@data$ConfirmedCases,
+        "<br><strong>Deaths: </strong>", mypolygons@data$Deaths
+        ) %>% 
+      lapply(htmltools::HTML)
+    
+    pal <- colorBin("Reds", domain = newx$ConfirmedCases,bins = c(1,20,40,60,80,100,200,500,max(newx$ConfirmedCases)))
+    
+    leaflet() %>% 
+      addPolygons(
+        data=mypolygons, weight = 2, color = "black", 
+        fillOpacity = 0.9,  fillColor = ~pal(mypolygons$ConfirmedCases),popup = popup) %>%  
+      addTiles() %>% 
+      addLegend("bottomright", pal = pal, values = newx$ConfirmedCases,
+                title = "Number of Cases",
+                opacity = 1) 
+    
+  })
+
+}
+
+#Shinyapp----------------------
+shinyApp(ui = ui, server = server)
+

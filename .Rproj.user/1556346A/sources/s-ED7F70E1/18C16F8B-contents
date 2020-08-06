@@ -1,0 +1,19 @@
+library(tidyverse)
+comedydata <- read_csv("comedy.csv")
+view(comedydata)
+
+comedydata %>% 
+  separate(Joke_identifier,into = c("Comedian","Location","ID"),sep = " ",) %>% 
+  view()
+
+a <- "\""
+single_quote <- '\t'
+double_quote <- "\\"
+double_quote
+single_quote
+x <- "\u00b5"
+writeLines(single_quote)
+
+datacsv$State[str_length(datacsv$State)==3]
+str_c(c("x", "y", "z"),"m")
+?paste

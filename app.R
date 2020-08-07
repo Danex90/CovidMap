@@ -276,31 +276,29 @@ server <- function(input, output){
   })
   output$plot3 <- renderPlotly({
      plot3 <-  dailydatacsv %>% 
-      filter(State == "National") %>% 
+      filter(State %in% input$States) %>% 
       #pivot_longer(cols = c("New Cases"), names_to = "variable" , values_to = "New Cases") %>% 
       ggplot(aes(x=Date,y=`New Cases`))+
-      geom_col(aes(fill=State))+
-      geom_line(aes(y=Roll_avg_cases),size=0.5)+
-       #geom_line(data = testscsv, aes(x=Date,y=`No. Of Tests`))+
-       #geom_point(data = testscsv, aes(x=Date,y=`No. Of Tests`),size=0.6)+
+       geom_line(aes(color=State))+
+       geom_point(aes(color=State),size=0.6)+
       labs(title = "Daily totals for new COVID 19 cases in Nigeria",x="Date",y="New Cases")+
-       theme(axis.title.y = element_blank(),axis.text.x = element_text(angle = 45),legend.position = "none")+
+       theme(axis.title.y = element_blank(),axis.text.x = element_text(angle = 45),legend.position = "right")+
        scale_x_date(breaks = "2 week",date_labels = format( "%d-%B"))
     
-     ggplotly(plot3,tooltip=c("Date","New Cases"))%>% style(hoverinfo="none",traces =c(2,3) ) %>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
+     ggplotly(plot3,tooltip=c("Date","New Cases","State"))%>%  config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
   })
   output$plot4 <- renderPlotly({
   plot4 <- dailydatacsv %>% 
-      filter(State == "National") %>% 
+      filter(State %in% input$States) %>% 
       #pivot_longer(cols = c("New Deaths"), names_to = "variable" , values_to = "New Deaths") %>% 
       ggplot(aes(x=Date,y=`New Deaths`))+
-      geom_col(aes(fill=State))+
-      geom_line(aes(y=Roll_avg_deaths),size=0.5)+
+    geom_line(aes(color=State))+
+    geom_point(aes(color=State),size=0.6)+
       labs(title = "Daily totals for new COVID 19 related deaths in Nigeria",x="Date",y="New Deaths")+
-    theme(axis.title.y = element_blank(),axis.text.x = element_text(angle = 45),legend.position = "none")+
+    theme(axis.title.y = element_blank(),axis.text.x = element_text(angle = 45),legend.position = "right")+
     scale_x_date(breaks = "2 week",date_labels = format( "%d-%B"))
     
-    ggplotly(plot4,tooltip = c("Date","New Deaths")) %>% style(hoverinfo="none",traces =c(2,3) )%>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
+    ggplotly(plot4,tooltip = c("Date","New Deaths","State"))%>% config(displayModeBar=F) %>% layout(xaxis=list(fixedrange=T)) %>% layout(yaxis=list(fixedrange=T))
    })
   #Data for the map-----------------------------
   output$mymap1 <- renderLeaflet({

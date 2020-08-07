@@ -1,4 +1,3 @@
-rm(list=ls())
 #Loading required packages
 library(shinyEffects)
 library(shiny)

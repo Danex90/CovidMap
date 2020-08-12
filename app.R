@@ -168,9 +168,10 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Maps",tabName = "Maps",icon = icon("map")),
       menuItem("Charts",tabName = "Charts", icon = icon("th")),
+      #menuItem(sliderInput(inputId = "dates",label = "Select Date",min= min(datacsv$Date),max=max(datacsv$Date),value = max(datacsv$Date))),
       a("Data Source",href="http://covid19.ncdc.gov.ng",target="_blank"),
-      p(paste0("Last Updated: ",realdate))
-      #menuItem(selectInput(inputId = "cases",label = "Data to display",choices = selectChoices)),
+      p(paste0("Last Updated: ",realdate)),
+      a("Twitter ",href="https://twitter.com/Danex",target="_blank")
       #menuItem(actionButton(inputId = "cli",label = "Update"))
     )
   ),
@@ -229,6 +230,7 @@ ui <- dashboardPage(
 
 #Server starts here------------------
 server <- function(input, output){
+  
   output$newcases <- renderValueBox({
     valueBox(latest$NewConfirmedCases,paste0("New Cases \n(Last 24 Hrs)"),icon =icon("arrow-up"),color = "yellow")
   })

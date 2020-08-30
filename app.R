@@ -13,8 +13,8 @@ library(lubridate)
 datacsv <- read_csv("Complete NCDC Data.csv")
 #testscsv <- read_csv("Tests Done.csv")
 mypolygons <- readRDS("gadm36_NGA_1_sp.rds")
-#testscsv <- testscsv %>% 
-#  mutate(Date=mdy(Date))
+datacsv <- datacsv %>% 
+  mutate(Date=mdy(Date))
 #glimpse(datacsv)
 
 #Create a column for daily tests

@@ -1,14 +1,3 @@
-#rm(list = ls())
-#library(tidyverse)
-#library(lubridate)
-#testscsv <- read_csv("Tests Done.csv")
-#testcsv <- testscsv %>% 
-#  mutate(Date = mdy(Date))
-#testcsv %>% 
-#  mutate(New_tests = `No. Of Tests` - lag(`No. Of Tests`)) %>% 
-#  view()
-#install.packages("filesstrings")
-
 rm(list=ls())
 library(filesstrings)
 library(rvest)
@@ -38,8 +27,8 @@ ngr_covid_cases <- ngr_covid_cases %>%
 
 datacsv <- read_csv("C:\\Users\\Laptop\\Desktop\\Covid map\\R\\Shiny\\CovidMap\\Complete NCDC Data.csv")
 
-#datacsv <- datacsv %>% 
-# mutate(Date=mdy(Date))
+datacsv <- datacsv %>% 
+ mutate(Date=mdy(Date))
 names(ngr_covid_cases) <- names(datacsv)
 
 
@@ -63,7 +52,6 @@ ngr_covid_cases <-  ngr_covid_cases %>%
   mutate(Date=max(datacsv$Date)+1)
 
 datacsv <- rbind(datacsv,ngr_covid_cases)
-glimpse(datacsv)
 write_csv(datacsv,"C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/rsconnect/Complete NCDC Data.csv")
 file.move("C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/Complete NCDC Data.csv",destinations =  "C:/Users/Laptop/Desktop/Covid map/R/Shiny", overwrite = TRUE )
 file.move("C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/rsconnect/Complete NCDC Data.csv",destinations = "C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap",overwrite = TRUE )

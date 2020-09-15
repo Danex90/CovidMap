@@ -15,7 +15,7 @@ datacsv <- read_csv("Complete NCDC Data.csv")
 mypolygons <- readRDS("gadm36_NGA_1_sp.rds")
 #datacsv <- datacsv %>% 
 #  mutate(Date=mdy(Date))
-#glimpse(datacsv)
+
 
 #Create a column for daily tests
 #testscsv <- testscsv %>% 

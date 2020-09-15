@@ -27,8 +27,8 @@ ngr_covid_cases <- ngr_covid_cases %>%
 
 datacsv <- read_csv("C:\\Users\\Laptop\\Desktop\\Covid map\\R\\Shiny\\CovidMap\\Complete NCDC Data.csv")
 
-#datacsv <- datacsv %>% 
-# mutate(Date=mdy(Date))
+datacsv <- datacsv %>% 
+ mutate(Date=mdy(Date))
 names(ngr_covid_cases) <- names(datacsv)
 
 
@@ -53,5 +53,5 @@ ngr_covid_cases <-  ngr_covid_cases %>%
 
 datacsv <- rbind(datacsv,ngr_covid_cases)
 write_csv(datacsv,"C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/rsconnect/Complete NCDC Data.csv")
-file.move("C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/Complete NCDC Data.csv",destinations =  "C:/Users/Laptop/Desktop/Covid map/R/Shiny", overwrite = TRUE )
+  file.move("C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/Complete NCDC Data.csv",destinations =  "C:/Users/Laptop/Desktop/Covid map/R/Shiny", overwrite = TRUE )
 file.move("C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap/rsconnect/Complete NCDC Data.csv",destinations = "C:/Users/Laptop/Desktop/Covid map/R/Shiny/CovidMap",overwrite = TRUE )

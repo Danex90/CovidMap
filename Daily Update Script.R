@@ -27,8 +27,8 @@ ngr_covid_cases <- ngr_covid_cases %>%
 
 datacsv <- read_csv("C:\\Users\\Laptop\\Desktop\\Covid map\\R\\Shiny\\CovidMap\\Complete NCDC Data.csv")
 
-datacsv <- datacsv %>% 
- mutate(Date=mdy(Date))
+#datacsv <- datacsv %>% 
+# mutate(Date=mdy(Date))
 names(ngr_covid_cases) <- names(datacsv)
 
 
